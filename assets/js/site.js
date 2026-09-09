@@ -702,9 +702,28 @@
           (data.intro ? '<p class="lead">' + data.intro + "</p>" : "");
       }
 
+      /* A stable hash per tile, so the mosaic is irregular but does not
+         reshuffle on every render. */
+      var sizeFor = function (k, i) {
+        var seed = 0;
+        for (var c = 0; c < k.length; c++) seed = (seed * 131 + k.charCodeAt(c)) >>> 0;
+        /* avalanche the index so neighbouring tiles do not get similar
+           values, which a simple multiply-add hash would give them */
+        var h = (seed + (i + 1) * 2654435761) >>> 0;
+        h ^= h >>> 15; h = Math.imul(h, 2246822507) >>> 0;
+        h ^= h >>> 13; h = Math.imul(h, 3266489909) >>> 0;
+        h = (h ^ (h >>> 16)) >>> 0;   /* keep it unsigned: a negative
+                                              remainder would skew the mix */
+        var r = h % 100;
+        if (r < 12) return " s-big";
+        if (r < 34) return " s-wide";
+        if (r < 50) return " s-tall";
+        return "";
+      };
+
       host.innerHTML = data.items.map(function (it, i) {
         var thumb = it.video ? it.poster : it.src;
-        return '<button class="shot' + (it.video ? " is-video" : "") + '" data-i="' + i + '"' +
+        return '<button class="shot' + (it.video ? " is-video" : "") + sizeFor(key, i) + '" data-i="' + i + '"' +
           ' aria-label="' + (it.video ? "Play video: " : "View photo: ") + it.caption + '">' +
           '<img src="' + thumb + '" alt="' + it.caption + '" loading="lazy">' +
           (it.video ? '<span class="shot-play" aria-hidden="true">' +
