@@ -375,6 +375,7 @@
     var reduce = window.matchMedia &&
                  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var raw = atob(L.bits), MW = L.w, MH = L.h;
+    var bord = L.borders ? atob(L.borders) : null;
 
     var TILT = -20 * RAD, ct = Math.cos(TILT), st = Math.sin(TILT);
     var spin = -2.1, dragging = false, lastX = 0, W = 0, H = 0, R = 0, cx = 0, cy = 0;
@@ -383,7 +384,8 @@
     var off = document.createElement("canvas");
     var octx = off.getContext("2d");
     var S = 0, img = null, buf = null;
-    var rowOff = null, colBase = null, inside = null, landPix = null, seaPix = null;
+    var rowOff = null, colBase = null, inside = null;
+    var landPix = null, seaPix = null, borderPix = null;
 
     function pack(r, g, b, sh) {
       r *= sh; g *= sh; b *= sh;
@@ -402,8 +404,9 @@
       /* Shading and polar ice depend only on the pixel, never on the
          rotation, so both finished colours are baked in up front and
          each frame just picks one. */
-      landPix = new Uint32Array(S * S);
-      seaPix  = new Uint32Array(S * S);
+      landPix   = new Uint32Array(S * S);
+      seaPix    = new Uint32Array(S * S);
+      borderPix = new Uint32Array(S * S);
 
       var Lx = -0.42, Ly = 0.48, Lz = 0.77;
       var n = Math.sqrt(Lx*Lx + Ly*Ly + Lz*Lz); Lx/=n; Ly/=n; Lz/=n;
@@ -443,6 +446,9 @@
           seaPix[i]  = pack(21 + (200 - 21) * ice,
                             71 + (222 - 71) * ice,
                             105 + (232 - 105) * ice, sh);
+          borderPix[i] = pack(182 + (238 - 182) * ice,
+                              212 + (244 - 212) * ice,
+                              168 + (246 - 168) * ice, sh);
         }
       }
     }
@@ -465,8 +471,10 @@
         var c = colBase[i] + spinCols;
         c -= Math.floor(c / MW) * MW;
         var idx = rowOff[i] + (c | 0);
-        buf[i] = ((raw.charCodeAt(idx >> 3) >> (7 - (idx & 7))) & 1)
-               ? landPix[i] : seaPix[i];
+        var byteAt = idx >> 3, bitAt = 7 - (idx & 7);
+        if (bord && ((bord.charCodeAt(byteAt) >> bitAt) & 1)) buf[i] = borderPix[i];
+        else if ((raw.charCodeAt(byteAt) >> bitAt) & 1)       buf[i] = landPix[i];
+        else                                                  buf[i] = seaPix[i];
       }
       octx.putImageData(img, 0, 0);
     }
