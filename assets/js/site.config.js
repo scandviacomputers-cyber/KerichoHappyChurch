@@ -275,14 +275,19 @@ window.NATIONS = {
   eyebrow: "To the nations",
   title: "Where the gospel has taken us",
   intro: "From open-air crusades at home to pulpits across Europe, Asia and America — the same gospel, carried wherever the door has opened.",
+
+  /* `home` is the point every arc is drawn from.
+     lat/lng place each marker on the globe — decimal degrees,
+     north and east positive. */
+  home: { name: "Kericho", lat: -0.3622, lng: 35.2919 },
   items: [
-    { code: "ke", name: "Kenya",         note: "Home" },
-    { code: "tz", name: "Tanzania" },
-    { code: "us", name: "United States" },
-    { code: "dk", name: "Denmark" },
-    { code: "de", name: "Germany" },
-    { code: "se", name: "Sweden" },
-    { code: "kr", name: "South Korea" },
-    { code: "ua", name: "Ukraine" }
+    { code: "ke", name: "Kenya",         note: "Home", lat: -0.3622, lng:  35.2919 },
+    { code: "tz", name: "Tanzania",                    lat: -6.3690, lng:  34.8888 },
+    { code: "us", name: "United States",               lat: 39.8283, lng: -98.5795 },
+    { code: "dk", name: "Denmark",                     lat: 56.2639, lng:   9.5018 },
+    { code: "de", name: "Germany",                     lat: 51.1657, lng:  10.4515 },
+    { code: "se", name: "Sweden",                      lat: 60.1282, lng:  18.6435 },
+    { code: "kr", name: "South Korea",                 lat: 35.9078, lng: 127.7669 },
+    { code: "ua", name: "Ukraine",                     lat: 48.3794, lng:  31.1656 }
   ]
 };

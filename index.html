@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css?v=202609091908">
+<link rel="stylesheet" href="assets/css/styles.css?v=202609092341">
 </head>
 <body>
 <div data-header></div>
@@ -180,7 +180,11 @@
   <section class="section tint-dark">
     <div class="wrap">
       <div class="section-head center" data-nations-head data-reveal></div>
-      <div class="flags" data-nations></div>
+      <div class="globe-wrap" data-reveal>
+        <canvas class="globe" data-globe aria-hidden="true"></canvas>
+        <p class="globe-hint">Drag to spin</p>
+      </div>
+      <ul class="nation-list" data-nations aria-label="Countries the ministry has preached in"></ul>
     </div>
   </section>
 
@@ -300,7 +304,8 @@
 </main>
 
 <div data-footer></div>
-<script src="assets/js/site.config.js?v=202609091908"></script>
-<script src="assets/js/site.js?v=202609091908"></script>
+<script src="assets/js/globe-data.js?v=202609092341"></script>
+<script src="assets/js/site.config.js?v=202609092341"></script>
+<script src="assets/js/site.js?v=202609092341"></script>
 </body>
 </html>

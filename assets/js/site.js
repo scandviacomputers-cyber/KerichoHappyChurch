@@ -343,14 +343,210 @@
         '<p class="nations-count"><b>' + N.items.length + "</b> nations and counting</p>";
     }
 
-    host.innerHTML = N.items.map(function (n, i) {
-      return '<div class="flag-card" data-reveal data-delay="' + ((i % 4) + 1) + '">' +
-        '<span class="flag-wrap"><img src="assets/img/flags/' + n.code + '.svg" ' +
-          'alt="Flag of ' + n.name + '" loading="lazy" width="80" height="53"></span>' +
-        '<span class="flag-name">' + n.name + "</span>" +
-        (n.note ? '<span class="flag-note">' + n.note + "</span>" : "") +
-      "</div>";
+    /* Names stay as real text beneath the globe — a canvas is invisible
+       to screen readers and search engines. */
+    host.innerHTML = N.items.map(function (n) {
+      return '<li class="nation' + (n.note ? " is-home" : "") + '">' + n.name +
+        (n.note ? '<span class="nation-note">' + n.note + "</span>" : "") + "</li>";
     }).join("");
+  }
+
+  /* ---------- rotating globe ----------------------------------
+     A canvas globe drawn from scratch: land dots sampled from the
+     Natural Earth mask in globe-data.js, markers at each nation's
+     real coordinates, and great-circle arcs from Kericho.
+     No library, no WebGL. Pauses on hover and honours
+     prefers-reduced-motion.
+     ------------------------------------------------------------- */
+  function globe() {
+    var cv = document.querySelector("[data-globe]");
+    var N = window.NATIONS;
+    if (!cv || !N || !N.items) return;
+
+    var ctx = cv.getContext("2d");
+    if (!ctx) return;
+
+    var TAU = Math.PI * 2, RAD = Math.PI / 180;
+    var reduce = window.matchMedia &&
+                 window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* --- unpack the land mask into evenly spread points --- */
+    var land = [];
+    var L = window.GLOBE_LAND;
+    if (L) {
+      var raw = atob(L.bits), COUNT = 11000;
+      var isLand = function (lat, lng) {
+        var x = Math.floor((lng + 180) / 360 * L.w);
+        var y = Math.floor((90 - lat) / 180 * L.h);
+        if (x < 0 || x >= L.w || y < 0 || y >= L.h) return false;
+        var i = y * L.w + x;
+        return (raw.charCodeAt(i >> 3) >> (7 - (i & 7))) & 1;
+      };
+      /* Fibonacci sphere: equal-area, so no bunching at the poles. */
+      var golden = Math.PI * (3 - Math.sqrt(5));
+      for (var i = 0; i < COUNT; i++) {
+        var yy = 1 - (i / (COUNT - 1)) * 2;
+        var r = Math.sqrt(Math.max(0, 1 - yy * yy));
+        var th = golden * i;
+        var lat = Math.asin(yy) / RAD;
+        var lng = ((th / RAD) % 360 + 540) % 360 - 180;
+        if (isLand(lat, lng)) land.push([Math.cos(th) * r, yy, Math.sin(th) * r]);
+      }
+    }
+
+    var vec = function (lat, lng) {
+      var a = lat * RAD, b = lng * RAD;
+      return [Math.cos(a) * Math.cos(b), Math.sin(a), Math.cos(a) * Math.sin(b)];
+    };
+    var marks = N.items.map(function (n) {
+      return { name: n.name, note: n.note, v: vec(n.lat, n.lng) };
+    });
+    var home = N.home ? vec(N.home.lat, N.home.lng) : marks[0].v;
+
+    /* great-circle arc points between two unit vectors */
+    function arc(a, b, steps) {
+      var dot = Math.max(-1, Math.min(1, a[0]*b[0] + a[1]*b[1] + a[2]*b[2]));
+      var om = Math.acos(dot), out = [];
+      if (om < 1e-6) return [a];
+      for (var t = 0; t <= steps; t++) {
+        var f = t / steps, s1 = Math.sin((1 - f) * om) / Math.sin(om),
+            s2 = Math.sin(f * om) / Math.sin(om);
+        var lift = 1 + 0.18 * Math.sin(Math.PI * f);
+        out.push([(a[0]*s1 + b[0]*s2) * lift,
+                  (a[1]*s1 + b[1]*s2) * lift,
+                  (a[2]*s1 + b[2]*s2) * lift]);
+      }
+      return out;
+    }
+    var arcs = marks.map(function (m) { return arc(home, m.v, 48); });
+
+    var TILT = -18 * RAD, ct = Math.cos(TILT), st = Math.sin(TILT);
+    var spin = -Math.PI / 2, dragging = false, lastX = 0, hover = false, W = 0, Hh = 0, R = 0, cx = 0, cy = 0;
+
+    function resize() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var box = cv.getBoundingClientRect();
+      W = Math.max(1, box.width); Hh = Math.max(1, box.height);
+      cv.width = W * dpr; cv.height = Hh * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      R = Math.min(W, Hh) * 0.40;
+      cx = W / 2; cy = Hh / 2;
+    }
+
+    /* rotate about Y (spin) then X (tilt), then project orthographically */
+    function project(p) {
+      var cs = Math.cos(spin), sn = Math.sin(spin);
+      var x = p[0] * cs + p[2] * sn;
+      var z = -p[0] * sn + p[2] * cs;
+      var y2 = p[1] * ct - z * st;
+      var z2 = p[1] * st + z * ct;
+      return [cx + x * R, cy - y2 * R, z2];
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, Hh);
+
+      /* the sphere itself */
+      var g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
+      g.addColorStop(0, "rgba(31,107,78,.36)");
+      g.addColorStop(1, "rgba(8,21,15,.92)");
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fillStyle = g; ctx.fill();
+      ctx.strokeStyle = "rgba(237,186,85,.28)"; ctx.lineWidth = 1; ctx.stroke();
+
+      /* land */
+      for (var i = 0; i < land.length; i++) {
+        var p = project(land[i]);
+        if (p[2] <= 0) continue;
+        ctx.globalAlpha = 0.25 + p[2] * 0.65;
+        ctx.fillStyle = "#7fc2a1";
+        var sz = 0.9 + p[2] * 1.0;
+        ctx.fillRect(p[0] - sz / 2, p[1] - sz / 2, sz, sz);
+      }
+      ctx.globalAlpha = 1;
+
+      /* arcs from home */
+      ctx.lineWidth = 1.4;
+      for (var a = 0; a < arcs.length; a++) {
+        var pts = arcs[a], started = false;
+        ctx.beginPath();
+        for (var t = 0; t < pts.length; t++) {
+          var q = project(pts[t]);
+          if (q[2] <= -0.08) { started = false; continue; }
+          if (!started) { ctx.moveTo(q[0], q[1]); started = true; }
+          else ctx.lineTo(q[0], q[1]);
+        }
+        ctx.strokeStyle = "rgba(237,186,85,.42)";
+        ctx.stroke();
+      }
+
+      /* markers + labels — nearest first, so a close label wins a clash */
+      var boxes = [];
+      var order = marks.map(function (mk, i) { return i; }).sort(function (a, b) {
+        return project(marks[b].v)[2] - project(marks[a].v)[2];
+      });
+      for (var oi = 0; oi < order.length; oi++) {
+        var m = order[oi];
+        var mk = marks[m], q2 = project(mk.v);
+        if (q2[2] <= 0) continue;
+        var isHome = mk.note;
+        ctx.globalAlpha = Math.min(1, 0.35 + q2[2]);
+        ctx.beginPath(); ctx.arc(q2[0], q2[1], isHome ? 4.6 : 3.4, 0, TAU);
+        ctx.fillStyle = isHome ? "#F6D98A" : "#EDBA55";
+        ctx.fill();
+        ctx.beginPath(); ctx.arc(q2[0], q2[1], (isHome ? 4.6 : 3.4) + 3.5, 0, TAU);
+        ctx.strokeStyle = "rgba(237,186,85,.35)"; ctx.lineWidth = 1; ctx.stroke();
+
+        if (q2[2] > 0.22) {
+          ctx.font = "600 12px 'Plus Jakarta Sans', system-ui, sans-serif";
+          ctx.textBaseline = "middle";
+          var tw = ctx.measureText(mk.name).width;
+          var bx = q2[0] + 9, by = q2[1] - 8;
+          var box = [bx - 3, by - 8, tw + 6, 16];
+          var clash = false;
+          for (var b = 0; b < boxes.length; b++) {
+            var o = boxes[b];
+            if (box[0] < o[0] + o[2] && box[0] + box[2] > o[0] &&
+                box[1] < o[1] + o[3] && box[1] + box[3] > o[1]) { clash = true; break; }
+          }
+          if (!clash) {
+            boxes.push(box);
+            /* a soft plate keeps the name legible over land dots */
+            ctx.fillStyle = "rgba(8,21,15,.55)";
+            ctx.fillRect(box[0], box[1], box[2], box[3]);
+            ctx.fillStyle = "rgba(255,255,255,.95)";
+            ctx.fillText(mk.name, bx, by);
+          }
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    var last = 0;
+    function frame(now) {
+      if (!reduce && !dragging && !hover) spin += (now - last) * 0.00006;
+      last = now;
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    /* drag to spin */
+    cv.addEventListener("pointerdown", function (e) {
+      dragging = true; lastX = e.clientX; cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      spin += (e.clientX - lastX) * 0.006; lastX = e.clientX;
+    });
+    cv.addEventListener("pointerup", function (e) {
+      dragging = false; try { cv.releasePointerCapture(e.pointerId); } catch (err) {}
+    });
+    cv.addEventListener("mouseenter", function () { hover = true; });
+    cv.addEventListener("mouseleave", function () { hover = false; });
+
+    window.addEventListener("resize", resize);
+    resize();
+    last = performance.now();
+    requestAnimationFrame(frame);
   }
 
   /* ---------- galleries + lightbox ----------------------------
@@ -762,6 +958,7 @@
     filters();
     forms();
     nations();
+    globe();
     gallery();
     reveals();
   }
