@@ -516,7 +516,7 @@
       window.ALL_NATIONS.forEach(function (n) {
         if (visited[n[0]]) return;
         var v = vec(n[1], n[2]);
-        reach.push({ v: v, pts: arc(home, v, 20) });
+        reach.push({ name: n[0], v: v, pts: arc(home, v, 20) });
       });
     }
 
@@ -586,13 +586,10 @@
         ctx.stroke();
       }
 
-      /* markers, nearest label wins any clash */
+      /* Markers for the nations ministered in. */
       var boxes = [];
-      var order = marks.map(function (mk, i) { return i; }).sort(function (p, q) {
-        return project(marks[q].v)[2] - project(marks[p].v)[2];
-      });
-      for (var oi = 0; oi < order.length; oi++) {
-        var mk = marks[order[oi]], m2 = project(mk.v);
+      for (var mi = 0; mi < marks.length; mi++) {
+        var mk = marks[mi], m2 = project(mk.v);
         if (m2[2] <= 0) continue;
         var isHome = !!mk.note;
         ctx.globalAlpha = Math.min(1, 0.4 + m2[2]);
@@ -600,27 +597,63 @@
         ctx.fillStyle = isHome ? "#FFF0C2" : "#F6D98A"; ctx.fill();
         ctx.beginPath(); ctx.arc(m2[0], m2[1], (isHome ? 4.8 : 3.6) + 3.5, 0, TAU);
         ctx.strokeStyle = "rgba(246,217,138,.5)"; ctx.lineWidth = 1; ctx.stroke();
-
-        if (m2[2] > 0.2) {
-          ctx.font = "600 12px 'Plus Jakarta Sans', system-ui, sans-serif";
-          ctx.textBaseline = "middle";
-          var tw = ctx.measureText(mk.name).width;
-          var bx = m2[0] + 10, by = m2[1] - 9;
-          var box = [bx - 4, by - 8, tw + 8, 16], clash = false;
-          for (var b = 0; b < boxes.length; b++) {
-            var o = boxes[b];
-            if (box[0] < o[0]+o[2] && box[0]+box[2] > o[0] &&
-                box[1] < o[1]+o[3] && box[1]+box[3] > o[1]) { clash = true; break; }
-          }
-          if (!clash) {
-            boxes.push(box);
-            ctx.fillStyle = "rgba(6,16,12,.66)";
-            ctx.fillRect(box[0], box[1], box[2], box[3]);
-            ctx.fillStyle = "rgba(255,255,255,.96)";
-            ctx.fillText(mk.name, bx, by);
-          }
-        }
       }
+      ctx.globalAlpha = 1;
+
+      /* Country names. The nations ministered in are placed first so they
+         always win a clash; every other country is then labelled if its
+         name still fits, which thins out crowded regions the way a printed
+         map does. */
+      var cands = [];
+      for (var ci = 0; ci < marks.length; ci++) {
+        cands.push({ name: marks[ci].name, v: marks[ci].v, key: 1 });
+      }
+      for (var cj = 0; cj < reach.length; cj++) {
+        cands.push({ name: reach[cj].name, v: reach[cj].v, key: 0 });
+      }
+      cands.forEach(function (c) { c.p = project(c.v); });
+      cands.sort(function (a, b) {
+        if (a.key !== b.key) return b.key - a.key;      /* ministered first */
+        return b.p[2] - a.p[2];                          /* then nearest */
+      });
+
+      for (var k = 0; k < cands.length; k++) {
+        var c = cands[k], q = c.p, big = c.key === 1;
+        if (q[2] <= (big ? 0.18 : 0.30)) continue;
+
+        ctx.font = big
+          ? "600 12px 'Plus Jakarta Sans', system-ui, sans-serif"
+          : "500 9.5px 'Plus Jakarta Sans', system-ui, sans-serif";
+        var tw = ctx.measureText(c.name).width;
+        var bx = q[0] + (big ? 10 : 5), by = q[1] - (big ? 9 : 0);
+        var pad = big ? 4 : 2, hgt = big ? 16 : 12;
+        var box = [bx - pad, by - hgt / 2, tw + pad * 2, hgt];
+
+        if (box[0] < 2 || box[0] + box[2] > W - 2) continue;
+        var clash = false;
+        for (var bb = 0; bb < boxes.length; bb++) {
+          var o = boxes[bb];
+          if (box[0] < o[0]+o[2] && box[0]+box[2] > o[0] &&
+              box[1] < o[1]+o[3] && box[1]+box[3] > o[1]) { clash = true; break; }
+        }
+        if (clash) continue;
+        boxes.push(box);
+
+        if (big) {
+          ctx.fillStyle = "rgba(6,16,12,.66)";
+          ctx.fillRect(box[0], box[1], box[2], box[3]);
+          ctx.fillStyle = "rgba(255,255,255,.96)";
+        } else {
+          ctx.globalAlpha = Math.min(0.72, (q[2] - 0.30) * 1.8);
+          ctx.fillStyle = "rgba(255,255,255,.92)";
+          ctx.shadowColor = "rgba(4,12,9,.85)"; ctx.shadowBlur = 3;
+        }
+        ctx.textBaseline = "middle";
+        ctx.fillText(c.name, bx, by);
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+      }
+
       ctx.globalAlpha = 1;
     }
 
