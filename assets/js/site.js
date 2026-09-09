@@ -352,48 +352,126 @@
   }
 
   /* ---------- rotating globe ----------------------------------
-     A canvas globe drawn from scratch: land dots sampled from the
-     Natural Earth mask in globe-data.js, markers at each nation's
-     real coordinates, and great-circle arcs from Kericho.
-     No library, no WebGL. Pauses on hover and honours
-     prefers-reduced-motion.
+     A real Earth, drawn by texture-mapping the Natural Earth land
+     mask onto a sphere. For every pixel of the disc we invert the
+     projection to a latitude/longitude and look up land or sea, so
+     coastlines are genuine rather than approximated.
+
+     Because the globe only spins about its axis, each pixel's
+     latitude never changes and its longitude is just an offset —
+     so all the trigonometry is precomputed once and each frame is
+     an integer lookup.
+
+     No library, no WebGL. Drag to spin; honours reduced-motion.
      ------------------------------------------------------------- */
   function globe() {
     var cv = document.querySelector("[data-globe]");
-    var N = window.NATIONS;
-    if (!cv || !N || !N.items) return;
-
+    var N = window.NATIONS, L = window.GLOBE_LAND;
+    if (!cv || !N || !N.items || !L) return;
     var ctx = cv.getContext("2d");
     if (!ctx) return;
 
     var TAU = Math.PI * 2, RAD = Math.PI / 180;
     var reduce = window.matchMedia &&
                  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var raw = atob(L.bits), MW = L.w, MH = L.h;
 
-    /* --- unpack the land mask into evenly spread points --- */
-    var land = [];
-    var L = window.GLOBE_LAND;
-    if (L) {
-      var raw = atob(L.bits), COUNT = 11000;
-      var isLand = function (lat, lng) {
-        var x = Math.floor((lng + 180) / 360 * L.w);
-        var y = Math.floor((90 - lat) / 180 * L.h);
-        if (x < 0 || x >= L.w || y < 0 || y >= L.h) return false;
-        var i = y * L.w + x;
-        return (raw.charCodeAt(i >> 3) >> (7 - (i & 7))) & 1;
-      };
-      /* Fibonacci sphere: equal-area, so no bunching at the poles. */
-      var golden = Math.PI * (3 - Math.sqrt(5));
-      for (var i = 0; i < COUNT; i++) {
-        var yy = 1 - (i / (COUNT - 1)) * 2;
-        var r = Math.sqrt(Math.max(0, 1 - yy * yy));
-        var th = golden * i;
-        var lat = Math.asin(yy) / RAD;
-        var lng = ((th / RAD) % 360 + 540) % 360 - 180;
-        if (isLand(lat, lng)) land.push([Math.cos(th) * r, yy, Math.sin(th) * r]);
+    var TILT = -20 * RAD, ct = Math.cos(TILT), st = Math.sin(TILT);
+    var spin = -2.1, dragging = false, lastX = 0, W = 0, H = 0, R = 0, cx = 0, cy = 0;
+
+    /* offscreen buffer holding just the globe disc */
+    var off = document.createElement("canvas");
+    var octx = off.getContext("2d");
+    var S = 0, img = null, buf = null;
+    var rowOff = null, colBase = null, inside = null, landPix = null, seaPix = null;
+
+    function pack(r, g, b, sh) {
+      r *= sh; g *= sh; b *= sh;
+      if (r > 255) r = 255; if (g > 255) g = 255; if (b > 255) b = 255;
+      return (255 << 24) | ((b | 0) << 16) | ((g | 0) << 8) | (r | 0);
+    }
+
+    function build() {
+      S = Math.max(64, Math.min(Math.round(2 * R * (window.devicePixelRatio || 1)), 560));
+      off.width = off.height = S;
+      img = octx.createImageData(S, S);
+      buf = new Uint32Array(img.data.buffer);
+      rowOff  = new Int32Array(S * S);
+      colBase = new Float32Array(S * S);
+      inside  = new Uint8Array(S * S);
+      /* Shading and polar ice depend only on the pixel, never on the
+         rotation, so both finished colours are baked in up front and
+         each frame just picks one. */
+      landPix = new Uint32Array(S * S);
+      seaPix  = new Uint32Array(S * S);
+
+      var Lx = -0.42, Ly = 0.48, Lz = 0.77;
+      var n = Math.sqrt(Lx*Lx + Ly*Ly + Lz*Lz); Lx/=n; Ly/=n; Lz/=n;
+
+      for (var y = 0; y < S; y++) {
+        for (var x = 0; x < S; x++) {
+          var i = y * S + x;
+          var nx = (x + 0.5) / S * 2 - 1;
+          var ny = 1 - (y + 0.5) / S * 2;
+          var d2 = nx * nx + ny * ny;
+          if (d2 >= 1) { inside[i] = 0; continue; }
+          inside[i] = 1;
+          var nz = Math.sqrt(1 - d2);
+
+          /* undo the axial tilt to get sphere coords before rotation */
+          var ys = ny * ct + nz * st;
+          var zs = -ny * st + nz * ct;
+
+          var lat = Math.asin(Math.max(-1, Math.min(1, ys)));
+          var row = Math.floor((90 - lat / RAD) / 180 * MH);
+          if (row < 0) row = 0; else if (row >= MH) row = MH - 1;
+          rowOff[i] = row * MW;
+
+          /* longitude is this constant plus the spin */
+          var A = Math.atan2(zs, nx);
+          colBase[i] = (A / TAU + 0.5) * MW;
+
+          var dot = nx * Lx + ny * Ly + nz * Lz;
+          var sh = 0.34 + 0.92 * (dot > 0 ? dot : 0);
+
+          var latAbs = Math.abs(lat / RAD);
+          var ice = latAbs > 60 ? Math.min(1, (latAbs - 60) / 22) : 0;
+
+          landPix[i] = pack(74 + (226 - 74) * ice,
+                            122 + (236 - 122) * ice,
+                            78 + (240 - 78) * ice, sh);
+          seaPix[i]  = pack(21 + (200 - 21) * ice,
+                            71 + (222 - 71) * ice,
+                            105 + (232 - 105) * ice, sh);
+        }
       }
     }
 
+    function resize() {
+      var box = cv.getBoundingClientRect();
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.max(1, box.width); H = Math.max(1, box.height);
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      R = Math.min(W, H) * 0.42; cx = W / 2; cy = H / 2;
+      build();
+    }
+
+    /* paint the sphere surface for the current rotation */
+    function paintEarth() {
+      var spinCols = spin / TAU * MW;
+      for (var i = 0, len = S * S; i < len; i++) {
+        if (!inside[i]) { buf[i] = 0; continue; }
+        var c = colBase[i] + spinCols;
+        c -= Math.floor(c / MW) * MW;
+        var idx = rowOff[i] + (c | 0);
+        buf[i] = ((raw.charCodeAt(idx >> 3) >> (7 - (idx & 7))) & 1)
+               ? landPix[i] : seaPix[i];
+      }
+      octx.putImageData(img, 0, 0);
+    }
+
+    /* --- markers and arcs --- */
     var vec = function (lat, lng) {
       var a = lat * RAD, b = lng * RAD;
       return [Math.cos(a) * Math.cos(b), Math.sin(a), Math.cos(a) * Math.sin(b)];
@@ -403,117 +481,93 @@
     });
     var home = N.home ? vec(N.home.lat, N.home.lng) : marks[0].v;
 
-    /* great-circle arc points between two unit vectors */
     function arc(a, b, steps) {
-      var dot = Math.max(-1, Math.min(1, a[0]*b[0] + a[1]*b[1] + a[2]*b[2]));
-      var om = Math.acos(dot), out = [];
+      var d = Math.max(-1, Math.min(1, a[0]*b[0] + a[1]*b[1] + a[2]*b[2]));
+      var om = Math.acos(d), out = [];
       if (om < 1e-6) return [a];
       for (var t = 0; t <= steps; t++) {
-        var f = t / steps, s1 = Math.sin((1 - f) * om) / Math.sin(om),
-            s2 = Math.sin(f * om) / Math.sin(om);
-        var lift = 1 + 0.18 * Math.sin(Math.PI * f);
+        var f = t / steps;
+        var s1 = Math.sin((1 - f) * om) / Math.sin(om);
+        var s2 = Math.sin(f * om) / Math.sin(om);
+        var lift = 1 + 0.16 * Math.sin(Math.PI * f);
         out.push([(a[0]*s1 + b[0]*s2) * lift,
                   (a[1]*s1 + b[1]*s2) * lift,
                   (a[2]*s1 + b[2]*s2) * lift]);
       }
       return out;
     }
-    var arcs = marks.map(function (m) { return arc(home, m.v, 48); });
+    var arcs = marks.map(function (m) { return arc(home, m.v, 56); });
 
-    var TILT = -18 * RAD, ct = Math.cos(TILT), st = Math.sin(TILT);
-    var spin = -Math.PI / 2, dragging = false, lastX = 0, hover = false, W = 0, Hh = 0, R = 0, cx = 0, cy = 0;
-
-    function resize() {
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
-      var box = cv.getBoundingClientRect();
-      W = Math.max(1, box.width); Hh = Math.max(1, box.height);
-      cv.width = W * dpr; cv.height = Hh * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      R = Math.min(W, Hh) * 0.40;
-      cx = W / 2; cy = Hh / 2;
-    }
-
-    /* rotate about Y (spin) then X (tilt), then project orthographically */
     function project(p) {
       var cs = Math.cos(spin), sn = Math.sin(spin);
       var x = p[0] * cs + p[2] * sn;
       var z = -p[0] * sn + p[2] * cs;
-      var y2 = p[1] * ct - z * st;
-      var z2 = p[1] * st + z * ct;
-      return [cx + x * R, cy - y2 * R, z2];
+      return [cx + x * R, cy - (p[1] * ct - z * st) * R, p[1] * st + z * ct];
     }
 
     function draw() {
-      ctx.clearRect(0, 0, W, Hh);
+      ctx.clearRect(0, 0, W, H);
 
-      /* the sphere itself */
-      var g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
-      g.addColorStop(0, "rgba(31,107,78,.36)");
-      g.addColorStop(1, "rgba(8,21,15,.92)");
-      ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fillStyle = g; ctx.fill();
-      ctx.strokeStyle = "rgba(237,186,85,.28)"; ctx.lineWidth = 1; ctx.stroke();
+      /* atmosphere */
+      var halo = ctx.createRadialGradient(cx, cy, R * 0.94, cx, cy, R * 1.16);
+      halo.addColorStop(0, "rgba(120,190,225,.30)");
+      halo.addColorStop(1, "rgba(120,190,225,0)");
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(cx, cy, R * 1.16, 0, TAU); ctx.fill();
 
-      /* land */
-      for (var i = 0; i < land.length; i++) {
-        var p = project(land[i]);
-        if (p[2] <= 0) continue;
-        ctx.globalAlpha = 0.25 + p[2] * 0.65;
-        ctx.fillStyle = "#7fc2a1";
-        var sz = 0.9 + p[2] * 1.0;
-        ctx.fillRect(p[0] - sz / 2, p[1] - sz / 2, sz, sz);
-      }
-      ctx.globalAlpha = 1;
+      paintEarth();
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(off, cx - R, cy - R, R * 2, R * 2);
 
-      /* arcs from home */
-      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU);
+      ctx.strokeStyle = "rgba(237,186,85,.30)"; ctx.lineWidth = 1; ctx.stroke();
+
+      /* arcs from Kericho */
+      ctx.lineWidth = 1.5;
       for (var a = 0; a < arcs.length; a++) {
         var pts = arcs[a], started = false;
         ctx.beginPath();
         for (var t = 0; t < pts.length; t++) {
           var q = project(pts[t]);
-          if (q[2] <= -0.08) { started = false; continue; }
+          if (q[2] <= -0.05) { started = false; continue; }
           if (!started) { ctx.moveTo(q[0], q[1]); started = true; }
           else ctx.lineTo(q[0], q[1]);
         }
-        ctx.strokeStyle = "rgba(237,186,85,.42)";
+        ctx.strokeStyle = "rgba(246,217,138,.62)";
         ctx.stroke();
       }
 
-      /* markers + labels — nearest first, so a close label wins a clash */
+      /* markers, nearest label wins any clash */
       var boxes = [];
-      var order = marks.map(function (mk, i) { return i; }).sort(function (a, b) {
-        return project(marks[b].v)[2] - project(marks[a].v)[2];
+      var order = marks.map(function (mk, i) { return i; }).sort(function (p, q) {
+        return project(marks[q].v)[2] - project(marks[p].v)[2];
       });
       for (var oi = 0; oi < order.length; oi++) {
-        var m = order[oi];
-        var mk = marks[m], q2 = project(mk.v);
-        if (q2[2] <= 0) continue;
-        var isHome = mk.note;
-        ctx.globalAlpha = Math.min(1, 0.35 + q2[2]);
-        ctx.beginPath(); ctx.arc(q2[0], q2[1], isHome ? 4.6 : 3.4, 0, TAU);
-        ctx.fillStyle = isHome ? "#F6D98A" : "#EDBA55";
-        ctx.fill();
-        ctx.beginPath(); ctx.arc(q2[0], q2[1], (isHome ? 4.6 : 3.4) + 3.5, 0, TAU);
-        ctx.strokeStyle = "rgba(237,186,85,.35)"; ctx.lineWidth = 1; ctx.stroke();
+        var mk = marks[order[oi]], m2 = project(mk.v);
+        if (m2[2] <= 0) continue;
+        var isHome = !!mk.note;
+        ctx.globalAlpha = Math.min(1, 0.4 + m2[2]);
+        ctx.beginPath(); ctx.arc(m2[0], m2[1], isHome ? 4.8 : 3.6, 0, TAU);
+        ctx.fillStyle = isHome ? "#FFF0C2" : "#F6D98A"; ctx.fill();
+        ctx.beginPath(); ctx.arc(m2[0], m2[1], (isHome ? 4.8 : 3.6) + 3.5, 0, TAU);
+        ctx.strokeStyle = "rgba(246,217,138,.5)"; ctx.lineWidth = 1; ctx.stroke();
 
-        if (q2[2] > 0.22) {
+        if (m2[2] > 0.2) {
           ctx.font = "600 12px 'Plus Jakarta Sans', system-ui, sans-serif";
           ctx.textBaseline = "middle";
           var tw = ctx.measureText(mk.name).width;
-          var bx = q2[0] + 9, by = q2[1] - 8;
-          var box = [bx - 3, by - 8, tw + 6, 16];
-          var clash = false;
+          var bx = m2[0] + 10, by = m2[1] - 9;
+          var box = [bx - 4, by - 8, tw + 8, 16], clash = false;
           for (var b = 0; b < boxes.length; b++) {
             var o = boxes[b];
-            if (box[0] < o[0] + o[2] && box[0] + box[2] > o[0] &&
-                box[1] < o[1] + o[3] && box[1] + box[3] > o[1]) { clash = true; break; }
+            if (box[0] < o[0]+o[2] && box[0]+box[2] > o[0] &&
+                box[1] < o[1]+o[3] && box[1]+box[3] > o[1]) { clash = true; break; }
           }
           if (!clash) {
             boxes.push(box);
-            /* a soft plate keeps the name legible over land dots */
-            ctx.fillStyle = "rgba(8,21,15,.55)";
+            ctx.fillStyle = "rgba(6,16,12,.66)";
             ctx.fillRect(box[0], box[1], box[2], box[3]);
-            ctx.fillStyle = "rgba(255,255,255,.95)";
+            ctx.fillStyle = "rgba(255,255,255,.96)";
             ctx.fillText(mk.name, bx, by);
           }
         }
@@ -523,25 +577,23 @@
 
     var last = 0;
     function frame(now) {
-      if (!reduce && !dragging && !hover) spin += (now - last) * 0.00006;
+      if (!reduce && !dragging) spin += (now - last) * 0.00005;
       last = now;
       draw();
       requestAnimationFrame(frame);
     }
 
-    /* drag to spin */
     cv.addEventListener("pointerdown", function (e) {
-      dragging = true; lastX = e.clientX; cv.setPointerCapture(e.pointerId);
+      dragging = true; lastX = e.clientX;
+      try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     });
     cv.addEventListener("pointermove", function (e) {
-      if (!dragging) return;
-      spin += (e.clientX - lastX) * 0.006; lastX = e.clientX;
+      if (dragging) { spin += (e.clientX - lastX) * 0.006; lastX = e.clientX; }
     });
     cv.addEventListener("pointerup", function (e) {
-      dragging = false; try { cv.releasePointerCapture(e.pointerId); } catch (err) {}
+      dragging = false;
+      try { cv.releasePointerCapture(e.pointerId); } catch (err) {}
     });
-    cv.addEventListener("mouseenter", function () { hover = true; });
-    cv.addEventListener("mouseleave", function () { hover = false; });
 
     window.addEventListener("resize", resize);
     resize();
