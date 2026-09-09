@@ -1,0 +1,12 @@
+# Full-resolution source photos and video.
+# NOT published: 200+ MB, and many still contain the GPS coordinates
+# recorded by the camera. Keep them backed up somewhere private instead.
+originals/
+
+# macOS clutter
+.DS_Store
+**/.DS_Store
+
+# Editor / OS
+*.swp
+Thumbs.db

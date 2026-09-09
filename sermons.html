@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sermons — Kericho Happy Church</title>
+<meta name="description" content="Watch and listen to messages from Kericho Happy Church. Catch up on the latest series any time.">
+<link rel="icon" href="assets/img/brand/favicon.ico" sizes="any">
+<link rel="icon" href="assets/img/brand/mark-64.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/brand/mark-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css?v=202609091908">
+</head>
+<body>
+<div data-header></div>
+<main id="main">
+
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">Home</a> &nbsp;/&nbsp; Sermons</p>
+      <span class="eyebrow">Messages</span>
+      <h1 class="h-1">The Word, every week</h1>
+      <p class="lead">Missed a Sunday, or want to hear it again? Every message is here &mdash; watch, listen or share it with someone who needs it.</p>
+    </div>
+  </section>
+
+  <!-- Featured -->
+  <section class="section">
+    <div class="wrap">
+      <div class="split" data-sermon-featured data-reveal></div>
+    </div>
+  </section>
+
+  <!-- Archive -->
+  <section class="section tint-sand">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <span class="eyebrow">Archive</span>
+        <h2 class="h-1">More messages</h2>
+      </div>
+      <div class="btn-row" data-filter-bar data-filter-auto style="margin-bottom:2.5rem" role="group" aria-label="Filter sermons by series"></div>
+
+      <div class="grid g-3" data-sermons="0" data-sermons-from="1"></div>
+    </div>
+  </section>
+
+  <section class="section tint-dark">
+    <div class="wrap wrap-narrow center" data-reveal>
+      <h2 class="h-2">Never miss a message</h2>
+      <p class="lead">Subscribe on YouTube and we will land in your feed every Sunday afternoon.</p>
+      <div class="btn-row" style="justify-content:center;margin-top:1.5rem">
+        <a class="btn btn-gold" id="ytLink" href="#" target="_blank" rel="noopener">Subscribe on YouTube</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+<div data-footer></div>
+<script src="assets/js/site.config.js?v=202609091908"></script>
+<script src="assets/js/site.js?v=202609091908"></script>
+<script>
+  /* The sermon list now lives in assets/js/site.config.js (window.SERMONS)
+     so the homepage and this page always show the same thing. */
+  document.addEventListener("DOMContentLoaded", function () {
+    var y = document.getElementById("ytLink");
+    if (y) y.href = window.CHURCH.social.youtube;
+  });
+</script>
+</body>
+</html>

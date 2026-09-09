@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Events — Kericho Happy Church</title>
+<meta name="description" content="Upcoming events, conferences, outreaches and the weekly rhythm of life at Kericho Happy Church.">
+<link rel="icon" href="assets/img/brand/favicon.ico" sizes="any">
+<link rel="icon" href="assets/img/brand/mark-64.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/brand/mark-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css?v=202609091908">
+</head>
+<body>
+<div data-header></div>
+<main id="main">
+
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">Home</a> &nbsp;/&nbsp; Events</p>
+      <span class="eyebrow">Calendar</span>
+      <h1 class="h-1">What's happening at Happy Church</h1>
+      <p class="lead">Conferences, outreaches, keshas and celebrations &mdash; plus the weekly rhythm that shapes our life together.</p>
+    </div>
+  </section>
+
+  <!-- Weekly rhythm -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <span class="eyebrow">Every week</span>
+        <h2 class="h-1">Our weekly rhythm</h2>
+        <p class="lead">The heartbeat of the church &mdash; same time, every week, all year.</p>
+      </div>
+      <div class="times" data-services data-reveal></div>
+    </div>
+  </section>
+
+  <!-- Upcoming -->
+  <section class="section tint-sand">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <span class="eyebrow">Mark your diary</span>
+        <h2 class="h-1">Upcoming events</h2>
+      </div>
+      <div id="eventList" data-reveal></div>
+      <p class="form-note mt-2"><em>Edit the <code>EVENTS</code> list at the bottom of this file to add or change events.</em></p>
+    </div>
+  </section>
+
+  <!-- Annual -->
+  <section class="section tint-dark">
+    <div class="wrap">
+      <div class="section-head center" data-reveal>
+        <span class="eyebrow">Every year</span>
+        <h2 class="h-1">Our annual gatherings</h2>
+      </div>
+      <div class="grid g-3">
+        <article class="feature" data-reveal data-delay="1">
+          <div class="feature-art"><img src="assets/img/art-worship.svg" data-photo="eventEaster" alt=""></div>
+          <div class="feature-body"><span class="tag gold">April</span><h3 class="h-3" style="margin-top:.75rem">Easter Celebration</h3><p style="color:var(--muted)">Good Friday reflection and a Resurrection Sunday celebration for the whole city.</p></div>
+        </article>
+        <article class="feature" data-reveal data-delay="2">
+          <div class="feature-art"><img src="assets/img/art-mission.svg" data-photo="eventConf" alt=""></div>
+          <div class="feature-body"><span class="tag gold">August</span><h3 class="h-3" style="margin-top:.75rem">City Church Conference</h3><p style="color:var(--muted)">Three days of teaching, worship and equipping with guest ministers from across Kenya.</p></div>
+        </article>
+        <article class="feature" data-reveal data-delay="3">
+          <div class="feature-art"><img src="assets/img/art-prayer.svg" data-photo="eventCarols" alt=""></div>
+          <div class="feature-body"><span class="tag gold">December</span><h3 class="h-3" style="margin-top:.75rem">Watchnight &amp; Carols</h3><p style="color:var(--muted)">Carols by candlelight and a night of thanksgiving as we cross into the new year together.</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap wrap-narrow center" data-reveal>
+      <h2 class="h-2">Want an event announced?</h2>
+      <p class="lead">Ministry leaders can send details to the church office and we will add it to the calendar.</p>
+      <div class="btn-row" style="justify-content:center;margin-top:1.5rem">
+        <a class="btn btn-gold" href="contact.html">Contact the office</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+<div data-footer></div>
+<script src="assets/js/site.config.js?v=202609091908"></script>
+<script src="assets/js/site.js?v=202609091908"></script>
+<script>
+/* ---------------------------------------------------------------
+   EVENTS — edit this list. date is "YYYY-MM-DD".
+   Past events drop off the list automatically.
+   --------------------------------------------------------------- */
+var EVENTS = [
+  { date: "2026-10-12", title: "Night of Worship &amp; Prayer", time: "6:00 pm – 9:00 pm", place: "Main Sanctuary",
+    blurb: "An evening of unhurried worship, testimony and prayer for our city." },
+  { date: "2026-10-26", title: "City Outreach — Kericho Market", time: "9:00 am", place: "Meet at church",
+    blurb: "Serving, praying with and blessing traders and families in the market." },
+  { date: "2026-11-09", title: "Marriage &amp; Family Seminar", time: "8:30 am – 4:00 pm", place: "Fellowship Hall",
+    blurb: "A full Saturday of teaching, honest conversation and practical tools for the home." },
+  { date: "2026-11-23", title: "Youth Camp Registration Closes", time: "All day", place: "Church office",
+    blurb: "Sign your teenager up for the December camp before places run out." },
+  { date: "2026-12-06", title: "Baptism Sunday", time: "9:00 am", place: "First Service",
+    blurb: "Publicly declaring new life in Christ. Speak to a pastor if you would like to be baptised." },
+  { date: "2026-12-24", title: "Carols by Candlelight", time: "6:30 pm", place: "Church grounds",
+    blurb: "Bring your family, your neighbours and a blanket. Chai and mandazi afterwards." },
+  { date: "2026-12-31", title: "Watchnight Service", time: "9:00 pm – 12:30 am", place: "Main Sanctuary",
+    blurb: "Crossing into the new year with thanksgiving, prayer and the Word." }
+];
+
+(function () {
+  var M = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var today = new Date(); today.setHours(0,0,0,0);
+  var list = EVENTS
+    .map(function (e) { var p = e.date.split("-"); e._d = new Date(+p[0], +p[1] - 1, +p[2]); return e; })
+    .filter(function (e) { return e._d >= today; })
+    .sort(function (a, b) { return a._d - b._d; });
+
+  var host = document.getElementById("eventList");
+  if (!list.length) {
+    host.innerHTML = '<p class="lead">No events on the calendar right now — check back soon, or join us this Sunday.</p>';
+    return;
+  }
+  host.innerHTML = list.map(function (e) {
+    return '<article class="event">' +
+      '<div class="event-date"><b>' + String(e._d.getDate()).padStart(2, "0") + '</b><span>' + M[e._d.getMonth()] + '</span></div>' +
+      '<div class="event-body"><h3>' + e.title + '</h3><p>' + e.blurb + '</p>' +
+        '<div class="event-meta"><span>' + e.time + '</span><span>' + e.place + '</span><span>' + e._d.getFullYear() + '</span></div></div>' +
+      '<a class="btn btn-ghost btn-sm" href="contact.html">I\'m coming</a>' +
+    '</article>';
+  }).join("");
+})();
+</script>
+</body>
+</html>
