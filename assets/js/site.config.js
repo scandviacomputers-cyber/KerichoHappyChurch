@@ -273,8 +273,8 @@ window.SERMONS = [
    ============================================================= */
 window.NATIONS = {
   eyebrow: "To the nations",
-  title: "Where the gospel has taken us",
-  intro: "From open-air crusades at home to pulpits across Europe, Asia and America — the same gospel, carried wherever the door has opened.",
+  title: "The gospel to all nations",
+  intro: "From open-air crusades at home to pulpits across Europe, Asia and America — the same gospel, carried wherever the door has opened. Every nation on earth is joined to Kericho on this globe; the brighter lines mark where we have already ministered.",
 
   /* `home` is the point every arc is drawn from.
      lat/lng place each marker on the globe — decimal degrees,

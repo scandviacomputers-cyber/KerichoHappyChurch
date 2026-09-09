@@ -340,7 +340,7 @@
         '<span class="eyebrow">' + (N.eyebrow || "To the nations") + "</span>" +
         '<h2 class="h-1">' + N.title + "</h2>" +
         (N.intro ? '<p class="lead">' + N.intro + "</p>" : "") +
-        '<p class="nations-count"><b>' + N.items.length + "</b> nations and counting</p>";
+        '<p class="nations-count"><b>' + N.items.length + "</b> nations ministered in &mdash; and counting</p>";
     }
 
     /* Names stay as real text beneath the globe — a canvas is invisible
@@ -506,14 +506,30 @@
     }
     var arcs = marks.map(function (m) { return arc(home, m.v, 56); });
 
+    /* A connection from Kericho to every country, drawn faintly behind
+       the bright arcs. The bright ones are the nations actually
+       ministered in; these are the rest of the world. */
+    var visited = {};
+    N.items.forEach(function (n) { visited[n.name] = true; });
+    var reach = [];
+    if (window.ALL_NATIONS) {
+      window.ALL_NATIONS.forEach(function (n) {
+        if (visited[n[0]]) return;
+        var v = vec(n[1], n[2]);
+        reach.push({ v: v, pts: arc(home, v, 20) });
+      });
+    }
+
+    var _cs = 1, _sn = 0;                 /* refreshed once per frame */
     function project(p) {
-      var cs = Math.cos(spin), sn = Math.sin(spin);
+      var cs = _cs, sn = _sn;
       var x = p[0] * cs + p[2] * sn;
       var z = -p[0] * sn + p[2] * cs;
       return [cx + x * R, cy - (p[1] * ct - z * st) * R, p[1] * st + z * ct];
     }
 
     function draw() {
+      _cs = Math.cos(spin); _sn = Math.sin(spin);
       ctx.clearRect(0, 0, W, H);
 
       /* atmosphere */
@@ -530,7 +546,32 @@
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU);
       ctx.strokeStyle = "rgba(237,186,85,.30)"; ctx.lineWidth = 1; ctx.stroke();
 
-      /* arcs from Kericho */
+      /* every other nation, faint */
+      ctx.lineWidth = 0.7;
+      ctx.strokeStyle = "rgba(246,217,138,.16)";
+      ctx.beginPath();
+      for (var rr = 0; rr < reach.length; rr++) {
+        var rp = reach[rr].pts, rstart = false;
+        for (var rt = 0; rt < rp.length; rt++) {
+          var rq = project(rp[rt]);
+          if (rq[2] <= -0.05) { rstart = false; continue; }
+          if (!rstart) { ctx.moveTo(rq[0], rq[1]); rstart = true; }
+          else ctx.lineTo(rq[0], rq[1]);
+        }
+      }
+      ctx.stroke();
+
+      /* a small point at each of those nations */
+      for (var rd = 0; rd < reach.length; rd++) {
+        var rv = project(reach[rd].v);
+        if (rv[2] <= 0.02) continue;
+        ctx.globalAlpha = 0.20 + rv[2] * 0.4;
+        ctx.fillStyle = "#F6D98A";
+        ctx.fillRect(rv[0] - 1, rv[1] - 1, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+
+      /* arcs to the nations ministered in */
       ctx.lineWidth = 1.5;
       for (var a = 0; a < arcs.length; a++) {
         var pts = arcs[a], started = false;
