@@ -69,6 +69,19 @@
     return best;
   }
 
+  /* Phones were pulling the full-size photos. Every .jpg has an -800
+     twin, so hand the browser both and let it pick by screen width. */
+  function srcsetFor(src) {
+    return /\.jpg$/i.test(src)
+      ? src.replace(/\.jpg$/i, "-800.jpg") + " 800w, " + src + " 1600w"
+      : "";
+  }
+  function setImg(el, src, sizes) {
+    var ss = srcsetFor(src);
+    if (ss) { el.setAttribute("srcset", ss); el.setAttribute("sizes", sizes || "100vw"); }
+    el.setAttribute("src", src);
+  }
+
   /* ---------- logo + photos ---------------------------------- */
   /* The brand mark shows the real logo when one is set in
      site.config.js, and falls back to the built-in dove if the file
@@ -92,7 +105,8 @@
     document.querySelectorAll("[data-photo]").forEach(function (img) {
       var slot = P[img.getAttribute("data-photo")];
       if (!slot || !slot.src) return;
-      img.src = slot.src;
+      setImg(img, slot.src,
+             "(max-width: 620px) 92vw, (max-width: 1024px) 46vw, 32vw");
       if (slot.alt) img.alt = slot.alt;
       img.classList.add("is-photo");
     });
@@ -394,7 +408,10 @@
     }
 
     function build() {
-      S = Math.max(64, Math.min(Math.round(2 * R * (window.devicePixelRatio || 1)), 560));
+      /* A phone does not need a 560px raster recomputed every frame —
+         cap it lower on small screens to save the battery. */
+      var cap = W < 700 ? 340 : 560;
+      S = Math.max(64, Math.min(Math.round(2 * R * (window.devicePixelRatio || 1)), cap));
       off.width = off.height = S;
       img = octx.createImageData(S, S);
       buf = new Uint32Array(img.data.buffer);
@@ -619,8 +636,10 @@
         return b.p[2] - a.p[2];                          /* then nearest */
       });
 
+      var tiny = W < 700;          /* phone: names would overlap into mush */
       for (var k = 0; k < cands.length; k++) {
         var c = cands[k], q = c.p;
+        if (tiny && c.key !== 1) continue;
         if (q[2] <= 0.12) continue;
 
         ctx.font = "600 11.5px 'Plus Jakarta Sans', system-ui, sans-serif";
@@ -720,6 +739,7 @@
           '<button class="show-arrow show-prev" aria-label="Previous">&#8249;</button>' +
           '<button class="show-arrow show-next" aria-label="Next">&#8250;</button>' +
           '<p class="show-caption"></p>' +
+          '<span class="show-count" aria-hidden="true"></span>' +
         "</div>" +
         '<div class="show-dots" role="tablist" aria-label="' + data.title + '"></div>';
 
@@ -727,6 +747,7 @@
       var slides = [].slice.call(host.querySelectorAll(".show-slide"));
       var caption = host.querySelector(".show-caption");
       var dots = host.querySelector(".show-dots");
+      var counter = host.querySelector(".show-count");
       var cur = 0, timer = null, paused = false;
 
       dots.innerHTML = items.map(function (it, i) {
@@ -741,7 +762,7 @@
         if (it.video) {
           if (!el.getAttribute("src")) el.setAttribute("src", it.video);
         } else if (!el.getAttribute("src")) {
-          el.setAttribute("src", it.src);
+          setImg(el, it.src, "(max-width: 700px) 94vw, min(1100px, 90vw)");
         }
       }
 
@@ -764,6 +785,7 @@
         slides.forEach(function (sl, n) { sl.classList.toggle("is-on", n === cur); });
         dotEls.forEach(function (d, n) { d.setAttribute("aria-selected", n === cur); });
         caption.textContent = items[cur].caption;
+        if (counter) counter.textContent = (cur + 1) + " / " + items.length;
 
         var el = slides[cur].firstElementChild;
         if (items[cur].video) {

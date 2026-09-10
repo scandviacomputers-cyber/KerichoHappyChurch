@@ -28,6 +28,17 @@ missing = {r: v for r, v in refs.items() if r not in IGNORE and not os.path.exis
 
 # files on disk that nothing references
 used = set(refs) | IGNORE
+# Each photo has an -800 twin used through srcset, which is assembled at
+# runtime rather than written out, so treat it as used when its full-size
+# original is. A missing twin is a real fault: it breaks srcset.
+missing_variants = []
+for r in list(used):
+    if r.endswith(".jpg") and not r.endswith("-800.jpg"):
+        twin = r[:-4] + "-800.jpg"
+        used.add(twin)
+        if os.path.exists(r) and not os.path.exists(twin):
+            missing_variants.append(twin)
+
 on_disk = set(glob.glob("assets/img/photos/*.jpg")) | set(glob.glob("assets/video/*.mp4"))
 orphans = sorted(on_disk - used)
 
@@ -35,8 +46,11 @@ print(f"referenced : {len(refs)}")
 print(f"missing    : {len(missing)}")
 for r, where in sorted(missing.items()):
     print(f"   MISSING  {r}   (used in {', '.join(sorted(where))})")
+print(f"no -800    : {len(missing_variants)}")
+for m in missing_variants:
+    print(f"   NO MOBILE VARIANT  {m}")
 print(f"unused     : {len(orphans)}")
 for o in orphans:
     print(f"   unused   {o}")
 
-sys.exit(1 if missing else 0)
+sys.exit(1 if (missing or missing_variants) else 0)

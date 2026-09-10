@@ -776,3 +776,31 @@ a.card p:last-child { margin-bottom: 0; }
   .leader-solo .feature-art,
   .leader-solo .feature-art.is-portrait { aspect-ratio: 4 / 5; min-height: 0; }
 }
+
+/* ---------- 19. MOBILE ---------------------------------------- */
+.show-count {
+  display: none; position: absolute; top: .9rem; right: .9rem; z-index: 4;
+  padding: .25rem .6rem; border-radius: var(--r-pill);
+  background: rgba(6,16,12,.6); color: rgba(255,255,255,.9);
+  font-size: .72rem; font-weight: 700; letter-spacing: .06em;
+}
+
+@media (max-width: 700px) {
+  /* 28 dots will not fit across a phone, and each would be far too
+     small to hit — show a counter and full-size arrows instead. */
+  .show-dots { display: none; }
+  .show-count { display: block; }
+  .show-arrow {
+    opacity: 1; width: 44px; height: 44px;
+    background: rgba(6,16,12,.55);
+  }
+  .show-prev { left: .5rem; }
+  .show-next { right: .5rem; }
+  .globe-wrap { width: min(400px, 94vw); }
+  .globe-hint { bottom: -.75rem; }
+
+  /* Copying the paybill number is a thumb action — give it a real
+     target rather than the 35px it had. */
+  .copy-btn { min-height: 44px; padding-inline: 1.1rem; }
+  .pay-row { flex-wrap: wrap; row-gap: .5rem; }
+}
