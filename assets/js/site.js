@@ -764,7 +764,7 @@
       var it = items[cur];
       stopVideo();
       media.innerHTML = it.video
-        ? '<video controls autoplay playsinline preload="metadata" poster="' + (it.poster || "") +
+        ? '<video controls autoplay muted playsinline preload="metadata" poster="' + (it.poster || "") +
           '" src="' + it.video + '"></video>'
         : '<img src="' + it.src + '" alt="' + it.caption + '">';
       cap.textContent = it.caption + "  (" + (cur + 1) + " of " + items.length + ")";
