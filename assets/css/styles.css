@@ -606,75 +606,76 @@ a.card p:last-child { margin-bottom: 0; }
   body { background: #fff; color: #000; }
 }
 
-/* ---------- 14. GALLERY + LIGHTBOX --------------------------- */
-.shots {
-  display: grid; gap: .75rem;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 190px;
-  grid-auto-flow: dense;
+/* ---------- 14. SLIDESHOW ------------------------------------ */
+.show { width: 100%; }
+.show-stage {
+  position: relative; width: 100%; aspect-ratio: 16 / 10;
+  border-radius: var(--r-lg); overflow: hidden;
+  background: var(--ink); box-shadow: var(--sh-lg);
 }
-.shot {
-  position: relative; padding: 0; border: none; overflow: hidden;
-  border-radius: var(--r-md); background: var(--ink-soft); cursor: zoom-in;
-  box-shadow: var(--sh-sm);
+.show-slide {
+  position: absolute; inset: 0; margin: 0;
+  opacity: 0; transition: opacity 1s var(--ease);
+  pointer-events: none;
 }
-.shot img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
-.shot:hover img, .shot:focus-visible img { transform: scale(1.06); }
-.shot::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, transparent 45%, rgba(8,21,15,.75) 100%);
-  opacity: 0; transition: opacity .35s var(--ease);
+.show-slide.is-on { opacity: 1; pointer-events: auto; }
+.show-slide img, .show-slide video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
 }
-.shot:hover::after, .shot:focus-visible::after { opacity: 1; }
-.shot-cap {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-  padding: .9rem 1rem; text-align: left; color: #fff; font-size: .84rem; font-weight: 600;
-  transform: translateY(8px); opacity: 0; transition: all .35s var(--ease);
+/* a slow drift on the photo that is showing, so a still image still breathes */
+.show-slide.is-on img { animation: drift 9s ease-out forwards; }
+@keyframes drift {
+  from { transform: scale(1.005); }
+  to   { transform: scale(1.075); }
 }
-.shot:hover .shot-cap, .shot:focus-visible .shot-cap { transform: none; opacity: 1; }
-/* a couple of larger tiles keep the grid from feeling like a spreadsheet */
-/* Tile sizes are assigned in site.js from a hash of the position, so
-   the mosaic looks scattered rather than following a visible pattern.
-   `dense` lets the browser back-fill the gaps that leaves. */
-.shot.s-wide { grid-column: span 2; }
-.shot.s-tall { grid-row: span 2; }
-.shot.s-big  { grid-column: span 2; grid-row: span 2; }
+.show-stage::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 45%;
+  background: linear-gradient(180deg, transparent, rgba(6,16,12,.82));
+  pointer-events: none;
+}
+.show-caption {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  margin: 0; padding: 1.5rem clamp(1.1rem, 3vw, 2rem);
+  color: #fff; font-size: clamp(.92rem, 1.5vw, 1.1rem); font-weight: 600;
+  text-shadow: 0 2px 12px rgba(0,0,0,.6);
+}
+.show-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
+  width: 46px; height: 46px; border-radius: 50%;
+  background: rgba(6,16,12,.45); border: 1px solid rgba(255,255,255,.22);
+  color: #fff; font-size: 1.5rem; line-height: 1;
+  display: grid; place-items: center;
+  opacity: 0; transition: opacity .3s var(--ease), background .3s var(--ease);
+}
+.show-stage:hover .show-arrow, .show-arrow:focus-visible { opacity: 1; }
+.show-arrow:hover { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+.show-prev { left: .9rem; }
+.show-next { right: .9rem; }
 
-/* `display:grid` below would otherwise beat the browser's own
-   [hidden]{display:none}, leaving the overlay permanently open. */
-.lightbox[hidden] { display: none; }
-.lightbox {
-  position: fixed; inset: 0; z-index: 200;
-  background: rgba(6,14,11,.94); backdrop-filter: blur(6px);
-  display: grid; grid-template-columns: auto 1fr auto; align-items: center;
-  gap: 1rem; padding: clamp(1rem, 4vw, 3rem);
-  animation: fadeUp .25s var(--ease);
+.show-dots {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem;
+  margin-top: 1.25rem;
 }
-.lb-fig { margin: 0; display: grid; gap: .9rem; justify-items: center; }
-.lb-fig img {
-  max-width: 100%; max-height: 78vh; border-radius: var(--r-md);
-  box-shadow: 0 40px 90px -30px rgba(0,0,0,.9);
+.show-dots button {
+  width: 8px; height: 8px; padding: 0; border: none; border-radius: 50%;
+  /* dark by default so they show on the cream and sand sections; the
+     dark sections flip them light */
+  background: rgba(11,29,24,.25); transition: all .3s var(--ease);
 }
-.lb-fig figcaption { color: rgba(255,255,255,.72); font-size: .88rem; }
-.lightbox button {
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
-  color: #fff; border-radius: 50%; width: 52px; height: 52px; font-size: 1.6rem; line-height: 1;
-  display: grid; place-items: center; transition: background .25s var(--ease);
+.tint-dark .show-dots button, .on-dark .show-dots button {
+  background: rgba(255,255,255,.28);
 }
-.lightbox button:hover { background: var(--gold); border-color: var(--gold); color: var(--ink); }
-.lb-close { position: absolute; top: 1.25rem; right: 1.25rem; z-index: 3; font-size: 1.9rem; }
+.show-dots button[aria-selected="true"] {
+  background: var(--gold); width: 24px; border-radius: var(--r-pill);
+}
 
-@media (max-width: 860px) {
-  .shots { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 150px; }
-  .shot.s-big { grid-row: span 2; }
+@media (prefers-reduced-motion: reduce) {
+  .show-slide.is-on img { animation: none; }
+  .show-arrow { opacity: 1; }
 }
 @media (max-width: 620px) {
-  .shots { gap: .5rem; }
-  .lightbox { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
-  .lb-prev, .lb-next { position: static; }
-  .lightbox .lb-fig { grid-row: 1; }
-  .lb-prev { grid-column: 1; justify-self: start; grid-row: 2; }
-  .lb-next { grid-column: 1; justify-self: end; grid-row: 2; margin-top: -52px; }
+  .show-stage { aspect-ratio: 4 / 3; }
+  .show-arrow { opacity: 1; width: 38px; height: 38px; }
 }
 
 /* ---------- 15. MAP ------------------------------------------ */
@@ -715,28 +716,6 @@ a.card p:last-child { margin-bottom: 0; }
 }
 .on-dark .copy-btn, .tint-dark .copy-btn { border-color: var(--line-dark); color: rgba(251,248,242,.75); }
 .on-dark .copy-btn:hover, .tint-dark .copy-btn:hover { border-color: var(--gold); color: var(--gold-light); }
-
-/* ---------- 16. GALLERY VIDEO -------------------------------- */
-.shot.is-video::before {
-  content: ""; position: absolute; inset: 0; z-index: 1;
-  background: linear-gradient(180deg, rgba(8,21,15,.15), rgba(8,21,15,.45));
-}
-.shot-play {
-  position: absolute; inset: 0; margin: auto; z-index: 2;
-  width: 54px; height: 54px; border-radius: 50%;
-  background: rgba(251,248,242,.94); color: var(--leaf-deep);
-  display: grid; place-items: center; box-shadow: var(--sh-md);
-  transition: transform .3s var(--ease), background .3s var(--ease);
-}
-.shot-play svg { width: 20px; height: 20px; margin-left: 3px; }
-.shot.is-video:hover .shot-play, .shot.is-video:focus-visible .shot-play {
-  transform: scale(1.1); background: var(--gold-light);
-}
-.lb-media { display: grid; place-items: center; }
-.lb-media img, .lb-media video {
-  max-width: 100%; max-height: 78vh; border-radius: var(--r-md);
-  box-shadow: 0 40px 90px -30px rgba(0,0,0,.9); background: #000;
-}
 
 /* ---------- 17. NATIONS + GLOBE ------------------------------ */
 .nations-count {

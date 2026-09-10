@@ -674,16 +674,20 @@
     requestAnimationFrame(frame);
   }
 
-  /* ---------- galleries + lightbox ----------------------------
-     Any element with data-gallery="<key>" is filled from
-     window.GALLERIES[key]. Items may be photos or videos; videos
-     show a poster with a play badge and only download when opened.
+  /* ---------- galleries: auto-playing slideshows ---------------
+     Each data-gallery element becomes a slideshow. Photos cross-fade
+     with a slow drift; videos play inline, muted, and hand over to
+     the next slide when they finish. Nothing needs to be opened.
+
+     Media is only fetched when a slide is near its turn, so a
+     28-slide gallery does not pull 28 files on page load.
      ------------------------------------------------------------- */
   function gallery() {
     var sets = document.querySelectorAll("[data-gallery]");
     if (!sets.length) return;
     var G = window.GALLERIES || {};
-    var boxes = [];
+    var reduce = window.matchMedia &&
+                 window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     sets.forEach(function (host) {
       var key = host.getAttribute("data-gallery");
@@ -693,6 +697,7 @@
         if (dead) dead.remove();
         return;
       }
+      var items = data.items;
 
       var head = host.parentElement.querySelector('[data-gallery-head="' + key + '"]')
               || host.parentElement.querySelector("[data-gallery-head]");
@@ -702,104 +707,111 @@
           (data.intro ? '<p class="lead">' + data.intro + "</p>" : "");
       }
 
-      /* A stable hash per tile, so the mosaic is irregular but does not
-         reshuffle on every render. */
-      var sizeFor = function (k, i) {
-        var seed = 0;
-        for (var c = 0; c < k.length; c++) seed = (seed * 131 + k.charCodeAt(c)) >>> 0;
-        /* avalanche the index so neighbouring tiles do not get similar
-           values, which a simple multiply-add hash would give them */
-        var h = (seed + (i + 1) * 2654435761) >>> 0;
-        h ^= h >>> 15; h = Math.imul(h, 2246822507) >>> 0;
-        h ^= h >>> 13; h = Math.imul(h, 3266489909) >>> 0;
-        h = (h ^ (h >>> 16)) >>> 0;   /* keep it unsigned: a negative
-                                              remainder would skew the mix */
-        var r = h % 100;
-        if (r < 12) return " s-big";
-        if (r < 34) return " s-wide";
-        if (r < 50) return " s-tall";
-        return "";
-      };
+      host.classList.add("show");
+      host.innerHTML =
+        '<div class="show-stage">' +
+          items.map(function (it, i) {
+            return '<figure class="show-slide" data-s="' + i + '">' +
+              (it.video
+                ? '<video muted playsinline preload="none" poster="' + (it.poster || "") + '"></video>'
+                : '<img alt="' + it.caption + '">') +
+            "</figure>";
+          }).join("") +
+          '<button class="show-arrow show-prev" aria-label="Previous">&#8249;</button>' +
+          '<button class="show-arrow show-next" aria-label="Next">&#8250;</button>' +
+          '<p class="show-caption"></p>' +
+        "</div>" +
+        '<div class="show-dots" role="tablist" aria-label="' + data.title + '"></div>';
 
-      host.innerHTML = data.items.map(function (it, i) {
-        var thumb = it.video ? it.poster : it.src;
-        return '<button class="shot' + (it.video ? " is-video" : "") + sizeFor(key, i) + '" data-i="' + i + '"' +
-          ' aria-label="' + (it.video ? "Play video: " : "View photo: ") + it.caption + '">' +
-          '<img src="' + thumb + '" alt="' + it.caption + '" loading="lazy">' +
-          (it.video ? '<span class="shot-play" aria-hidden="true">' +
-             '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg></span>' : "") +
-          '<span class="shot-cap">' + it.caption + "</span>" +
-        "</button>";
+      var stage = host.querySelector(".show-stage");
+      var slides = [].slice.call(host.querySelectorAll(".show-slide"));
+      var caption = host.querySelector(".show-caption");
+      var dots = host.querySelector(".show-dots");
+      var cur = 0, timer = null, paused = false;
+
+      dots.innerHTML = items.map(function (it, i) {
+        return '<button role="tab" aria-selected="' + (i === 0) +
+          '" aria-label="' + it.caption + '"></button>';
       }).join("");
+      var dotEls = [].slice.call(dots.querySelectorAll("button"));
 
-      boxes.push({ host: host, items: data.items });
-    });
+      /* load the media for a slide, and only then */
+      function load(i) {
+        var it = items[i], el = slides[i].firstElementChild;
+        if (it.video) {
+          if (!el.getAttribute("src")) el.setAttribute("src", it.video);
+        } else if (!el.getAttribute("src")) {
+          el.setAttribute("src", it.src);
+        }
+      }
 
-    if (!boxes.length) return;
+      function stop() { if (timer) { clearTimeout(timer); timer = null; } }
 
-    /* --- one lightbox, shared by every gallery --- */
-    var box = document.createElement("div");
-    box.className = "lightbox";
-    box.setAttribute("role", "dialog");
-    box.setAttribute("aria-modal", "true");
-    box.hidden = true;
-    box.innerHTML =
-      '<button class="lb-close" aria-label="Close">&times;</button>' +
-      '<button class="lb-prev" aria-label="Previous">&#8249;</button>' +
-      '<figure class="lb-fig"><div class="lb-media"></div><figcaption></figcaption></figure>' +
-      '<button class="lb-next" aria-label="Next">&#8250;</button>';
-    document.body.appendChild(box);
+      function show(i) {
+        stop();
+        var prev = cur;
+        cur = (i + items.length) % items.length;
 
-    var media = box.querySelector(".lb-media"),
-        cap = box.querySelector("figcaption"),
-        items = [], cur = 0, opener = null;
+        /* release the video we are leaving so it stops downloading */
+        if (items[prev] && items[prev].video && prev !== cur) {
+          var pv = slides[prev].firstElementChild;
+          if (pv && pv.pause) { pv.pause(); try { pv.currentTime = 0; } catch (e) {} }
+        }
 
-    function stopVideo() {
-      var v = media.querySelector("video");
-      if (v) { v.pause(); v.removeAttribute("src"); v.load(); }
-    }
+        load(cur);
+        load((cur + 1) % items.length);          /* the next one, ready to go */
 
-    function show(i) {
-      cur = (i + items.length) % items.length;
-      var it = items[cur];
-      stopVideo();
-      media.innerHTML = it.video
-        ? '<video controls autoplay muted playsinline preload="metadata" poster="' + (it.poster || "") +
-          '" src="' + it.video + '"></video>'
-        : '<img src="' + it.src + '" alt="' + it.caption + '">';
-      cap.textContent = it.caption + "  (" + (cur + 1) + " of " + items.length + ")";
-    }
+        slides.forEach(function (sl, n) { sl.classList.toggle("is-on", n === cur); });
+        dotEls.forEach(function (d, n) { d.setAttribute("aria-selected", n === cur); });
+        caption.textContent = items[cur].caption;
 
-    function open(list, i, from) {
-      items = list; opener = from;
-      show(i);
-      box.hidden = false;
-      document.body.style.overflow = "hidden";
-      box.querySelector(".lb-close").focus();
-    }
+        var el = slides[cur].firstElementChild;
+        if (items[cur].video) {
+          var done = false;
+          var go = function () { if (!done) { done = true; next(); } };
+          el.onended = go;
+          var p = el.play();
+          if (p && p.catch) p.catch(function () {});
+          /* fall back in case the video stalls or never fires ended */
+          if (!reduce && !paused) {
+            timer = setTimeout(go, Math.min(30000, ((el.duration || 12) + 1.5) * 1000));
+          }
+        } else if (!reduce && !paused) {
+          timer = setTimeout(next, 5200);
+        }
+      }
 
-    function close() {
-      stopVideo();
-      box.hidden = true;
-      document.body.style.overflow = "";
-      if (opener) opener.focus();
-    }
+      function next() { show(cur + 1); }
+      function prev() { show(cur - 1); }
 
-    boxes.forEach(function (b) {
-      b.host.addEventListener("click", function (e) {
-        var t = e.target.closest(".shot");
-        if (t) open(b.items, +t.getAttribute("data-i"), t);
+      host.querySelector(".show-next").addEventListener("click", function () { show(cur + 1); });
+      host.querySelector(".show-prev").addEventListener("click", function () { show(cur - 1); });
+      dotEls.forEach(function (d, i) {
+        d.addEventListener("click", function () { show(i); });
       });
-    });
-    box.querySelector(".lb-close").addEventListener("click", close);
-    box.querySelector(".lb-prev").addEventListener("click", function () { show(cur - 1); });
-    box.querySelector(".lb-next").addEventListener("click", function () { show(cur + 1); });
-    box.addEventListener("click", function (e) { if (e.target === box) close(); });
-    document.addEventListener("keydown", function (e) {
-      if (box.hidden) return;
-      if (e.key === "Escape") close();
-      if (e.key === "ArrowLeft") show(cur - 1);
-      if (e.key === "ArrowRight") show(cur + 1);
+
+      stage.addEventListener("mouseenter", function () { paused = true; stop(); });
+      stage.addEventListener("mouseleave", function () {
+        paused = false;
+        if (!reduce) show(cur);        /* restart the timer for this slide */
+      });
+
+      /* only run while the gallery is actually on screen */
+      if ("IntersectionObserver" in window) {
+        var io = new IntersectionObserver(function (es) {
+          es.forEach(function (e) {
+            if (e.isIntersecting) { if (!timer && !paused) show(cur); }
+            else {
+              stop();
+              var v = slides[cur].firstElementChild;
+              if (items[cur].video && v && v.pause) v.pause();
+            }
+          });
+        }, { threshold: 0.25 });
+        io.observe(host);
+      }
+
+      show(0);
     });
   }
 
