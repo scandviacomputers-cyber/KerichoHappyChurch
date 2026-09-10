@@ -1,0 +1,59 @@
+# =============================================================
+#  Netlify configuration for Kericho Happy Church
+#
+#  The site is plain static files, so there is nothing to build:
+#  Netlify just publishes the repository root.
+#
+#  IMPORTANT: deploy this from GitHub, not with `netlify deploy`
+#  from your Mac. A Git deploy only publishes committed files, so
+#  originals/ (200+ MB of source photos, many still carrying the
+#  GPS coordinates from the camera) stays private. A CLI deploy
+#  from this folder would upload it.
+# =============================================================
+
+[build]
+  publish = "."
+  command = ""
+
+# ---- Caching -------------------------------------------------
+# GitHub Pages forced max-age=600 on everything, which is why an
+# update could take ten minutes to appear. Here the HTML always
+# revalidates, so a change is visible on the next refresh, while
+# the heavy files stay cached.
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+
+# CSS and JS are requested with a ?v= stamp that changes each
+# deploy, so a long cache is safe: a new deploy is a new URL.
+[[headers]]
+  for = "/assets/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/assets/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+# Photos and video keep stable filenames and change rarely, so a
+# week is a fair trade between mobile data and freshness.
+[[headers]]
+  for = "/assets/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/video/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/vendor/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"

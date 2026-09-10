@@ -107,9 +107,28 @@ built-in dove mark rather than showing a broken image.
 
 ## Deploying
 
-It is a static site, so anything works — Netlify, Vercel, GitHub Pages,
-Cloudflare Pages, or plain cPanel hosting. Drag the folder in; there is
-nothing to build.
+The site is hosted on **Netlify**, deployed from the `main` branch of
+GitHub. Push, and Netlify rebuilds within about a minute:
+
+```bash
+git add -A && git commit -m "Update" && git push
+```
+
+`netlify.toml` sets the cache headers. HTML always revalidates, so a
+change shows on the next refresh, while photos, video and the
+versioned CSS/JS stay cached.
+
+**Deploy from GitHub, not from your Mac.** A Git deploy only publishes
+committed files, which keeps `originals/` private — it holds 200+ MB
+of source photos, many still carrying the GPS coordinates recorded by
+the camera. Running `netlify deploy` from this folder would upload
+that whole directory.
+
+Bump the asset stamp whenever you change CSS or JS:
+
+```bash
+sed -i '' 's/?v=[0-9]\{8,12\}/?v='"$(date +%Y%m%d%H%M)"'/g' *.html
+```
 
 ## The map
 
