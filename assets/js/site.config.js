@@ -118,16 +118,12 @@ window.PHOTOS = {
   /* --- Ministry cards (1200x750 each) --------------------- */
   kids:          { src: "assets/img/photos/kids-ministry.jpg", alt: "Children at the Happy Kids ministry" },
   youth:         { src: "assets/img/photos/city-youth.jpg", alt: "The City Youth group together after a service" },
-  youngadults:  null,
   outreach:      { src: "assets/img/photos/street-outreach.jpg", alt: "Church members out in the streets of Kericho - Kenya in the evening" },
   worship:       { src: "assets/img/photos/congregation-standing.jpg", alt: "The congregation standing in worship" },
   prayer:        { src: "assets/img/photos/prayer-2.jpg", alt: "A pastor laying hands on a member during prayer ministry" },
-  lifegroups:   null,
   hospitality:   { src: "assets/img/photos/congregation-seated.jpg", alt: "The congregation seated before the service begins" },
   fellowship:   null,
-  benevolence:  null,
   missions:      { src: "assets/img/photos/ministry-partners.jpg", alt: "Meeting ministry partners abroad" },
-  bibleschool:  null,
 
   /* --- Sermons -------------------------------------------- */
   sermonLatest:  { src: "assets/img/photos/ministryabroad.jpg", alt: "Preaching the Word during a ministry visit" },   /* 1200x675 (16:9) — preaching shot */
