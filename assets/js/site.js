@@ -749,6 +749,8 @@
       var dots = host.querySelector(".show-dots");
       var counter = host.querySelector(".show-count");
       var cur = 0, timer = null, paused = false;
+      /* how long each photo holds; set `interval` on the gallery to change it */
+      var hold = data.interval || 3400;
 
       dots.innerHTML = items.map(function (it, i) {
         return '<button role="tab" aria-selected="' + (i === 0) +
@@ -799,7 +801,7 @@
             timer = setTimeout(go, Math.min(30000, ((el.duration || 12) + 1.5) * 1000));
           }
         } else if (!reduce && !paused) {
-          timer = setTimeout(next, 5200);
+          timer = setTimeout(next, hold);
         }
       }
 
