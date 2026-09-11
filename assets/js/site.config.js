@@ -121,8 +121,6 @@ window.PHOTOS = {
   outreach:      { src: "assets/img/photos/street-outreach.jpg", alt: "Church members out in the streets of Kericho - Kenya in the evening" },
   worship:       { src: "assets/img/photos/congregation-standing.jpg", alt: "The congregation standing in worship" },
   prayer:        { src: "assets/img/photos/prayer-2.jpg", alt: "A pastor laying hands on a member during prayer ministry" },
-  hospitality:   { src: "assets/img/photos/congregation-seated.jpg", alt: "The congregation seated before the service begins" },
-  fellowship:   null,
   missions:      { src: "assets/img/photos/ministry-partners.jpg", alt: "Meeting ministry partners abroad" },
 
   /* --- Sermons -------------------------------------------- */
