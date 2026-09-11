@@ -116,7 +116,7 @@ window.PHOTOS = {
   story:         { src: "assets/img/photos/congregation-worship.jpg", alt: "The church family worshipping together during a service" },   /* 1200x750  — the church family together                */
 
   /* --- Ministry cards (1200x750 each) --------------------- */
-  kids:          { src: "assets/img/photos/kids-ministry.jpg", alt: "Children at the Happy Kids ministry" },
+  kids:          { src: "assets/img/photos/kids-ministry.jpg", alt: "Children at Sunday School - Happy Kids" },
   youth:         { src: "assets/img/photos/city-youth.jpg", alt: "The City Youth group together after a service" },
   outreach:      { src: "assets/img/photos/street-outreach.jpg", alt: "Church members out in the streets of Kericho - Kenya in the evening" },
   worship:       { src: "assets/img/photos/congregation-standing.jpg", alt: "The congregation standing in worship" },
@@ -194,7 +194,7 @@ window.GALLERIES = {
       { src: "assets/img/photos/congregation-hall.jpg",     caption: "Sunday morning in the hall" },
       { src: "assets/img/photos/church-building.jpg",       caption: "Our church building" },
       { video: "assets/video/kids-ministry.mp4", poster: "assets/video/kids-ministry.jpg",
-        caption: "Happy Kids ministry" },
+        caption: "Sunday School - Happy Kids" },
       { src: "assets/img/photos/congregation-standing.jpg", caption: "Standing to worship" },
       { src: "assets/img/photos/pastor-stage.jpg",          caption: "Ministering on stage" },
       { video: "assets/video/kids-praise.mp4", poster: "assets/video/kids-praise.jpg",
