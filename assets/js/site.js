@@ -738,14 +738,12 @@
           }).join("") +
           '<button class="show-arrow show-prev" aria-label="Previous">&#8249;</button>' +
           '<button class="show-arrow show-next" aria-label="Next">&#8250;</button>' +
-          '<p class="show-caption"></p>' +
           '<span class="show-count" aria-hidden="true"></span>' +
         "</div>" +
         '<div class="show-dots" role="tablist" aria-label="' + data.title + '"></div>';
 
       var stage = host.querySelector(".show-stage");
       var slides = [].slice.call(host.querySelectorAll(".show-slide"));
-      var caption = host.querySelector(".show-caption");
       var dots = host.querySelector(".show-dots");
       var counter = host.querySelector(".show-count");
       var cur = 0, timer = null, paused = false;
@@ -786,7 +784,6 @@
 
         slides.forEach(function (sl, n) { sl.classList.toggle("is-on", n === cur); });
         dotEls.forEach(function (d, n) { d.setAttribute("aria-selected", n === cur); });
-        caption.textContent = items[cur].caption;
         if (counter) counter.textContent = (cur + 1) + " / " + items.length;
 
         var el = slides[cur].firstElementChild;

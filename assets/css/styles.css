@@ -628,17 +628,6 @@ a.card p:last-child { margin-bottom: 0; }
   from { transform: scale(1.01); }
   to   { transform: scale(1.06); }
 }
-.show-stage::after {
-  content: ""; position: absolute; inset: auto 0 0 0; height: 45%;
-  background: linear-gradient(180deg, transparent, rgba(6,16,12,.82));
-  pointer-events: none;
-}
-.show-caption {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
-  margin: 0; padding: 1.5rem clamp(1.1rem, 3vw, 2rem);
-  color: #fff; font-size: clamp(.92rem, 1.5vw, 1.1rem); font-weight: 600;
-  text-shadow: 0 2px 12px rgba(0,0,0,.6);
-}
 .show-arrow {
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
   width: 46px; height: 46px; border-radius: 50%;
