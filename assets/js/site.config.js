@@ -145,11 +145,12 @@ window.PHOTOS = {
    ============================================================= */
 window.GALLERIES = {
 
-  /* Homepage — a highlight reel from our own services */
+  /* Homepage — a highlight reel. Deliberately not tied to one place:
+     these are from several gatherings, not all of them in Kericho. */
   sundays: {
-    eyebrow: "Our church life",
-    title: "Sundays at Kericho Happy Church",
-    intro: "Worship, the Word and a family that gathers week by week.",
+    eyebrow: "In ministry",
+    title: "Worship and the Word",
+    intro: "Moments from our services and ministry gatherings.",
     items: [
       { src: "assets/img/photos/service-teaching.jpg", caption: "Pastor John Deus teaching during a service" },
       { src: "assets/img/photos/service-congregation.jpg", caption: "The congregation standing in praise" },
@@ -203,11 +204,12 @@ window.GALLERIES = {
 
 
 
-  /* About page — life at the church here in Kericho */
+  /* About page — the fuller set. Not all of these were taken in
+     Kericho, so the title does not claim a single location. */
   life: {
     eyebrow: "Our church life",
-    title: "Life at Kericho Happy Church",
-    intro: "A few moments from our Sundays, our children's ministry and our life together in the city.",
+    title: "Our life together",
+    intro: "A few moments from our Sundays, our children's ministry and our gatherings together.",
     items: [
       /* The highlight — shown first. */
       { src: "assets/img/photos/service-teaching.jpg", caption: "Pastor John Deus teaching during a service" },
