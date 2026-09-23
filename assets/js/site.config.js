@@ -14,7 +14,8 @@ window.CHURCH = {
   contact: {
     phone: "+254 722 725 791",
     whatsapp: "254722725791",           // digits only, no +
-    email: "hello@kerichohappychurch.org",
+    email: "deusjohnofficial@gmail.com",
+    email2: "kerichohappychurch@gmail.com",
     address: "Kericho Town, Kericho County, Kenya",
     addressLine2: "Kericho Town - Kenya",               // Google listing has no street name
 

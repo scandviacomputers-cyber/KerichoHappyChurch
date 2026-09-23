@@ -225,6 +225,9 @@
             "<li>" + C.contact.address + "</li>" +
             '<li><a href="tel:' + C.contact.phone.replace(/\s/g, "") + '">' + C.contact.phone + "</a></li>" +
             '<li><a href="mailto:' + C.contact.email + '">' + C.contact.email + "</a></li>" +
+            (C.contact.email2
+              ? '<li><a href="mailto:' + C.contact.email2 + '">' + C.contact.email2 + "</a></li>"
+              : "") +
             '<li><a href="https://wa.me/' + C.contact.whatsapp + '" target="_blank" rel="noopener">WhatsApp us</a></li>' +
           "</ul></div>" +
         "</div>" +
