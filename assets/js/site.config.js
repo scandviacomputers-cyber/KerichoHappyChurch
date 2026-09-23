@@ -235,6 +235,17 @@ window.GALLERIES = {
    ============================================================= */
 window.SERMONS = [
   {
+    title: "Holy Spirit Dispensation",
+    cat: "standalone",
+    series: "Ruiru Happy Church, Nairobi",
+    text: "Joel 2:28 &middot; Acts 2",
+    len: "30 min",
+    img: "assets/img/photos/sermon-holy-spirit.jpg",
+    art: "art-prayer",
+    blurb: "God promised through Joel to pour out His Spirit on all people, and Peter declared it fulfilled at Pentecost. Why the Church must be filled with the Holy Spirit in these last days.",
+    url: "https://www.youtube.com/watch?v=LIPYWgHL2CM"
+  },
+  {
     title: "Mabadiliko — The Transformation",
     cat: "standalone",
     series: "Happy Church Kehancha",
@@ -269,7 +280,15 @@ window.SERMONS = [
     blurb: "God is doing a new thing — a way in the wilderness, rivers in the desert. Your mistakes and failures do not define your destiny. Preached in English and German.",
     url: "https://www.youtube.com/watch?v=BGlCHxqB2cA"
   },
-
+  {
+    title: "The Effects of Judgmental Spirit",
+    cat: "standalone",
+    series: "John Deus",
+    len: "16 min",
+    img: "assets/img/photos/sermon-judgmental-spirit.jpg",
+    art: "art-sermon",
+    url: "https://www.youtube.com/watch?v=6kyZfHnMx-o"
+  }
 ];
 
 /* =============================================================
