@@ -150,7 +150,6 @@ window.GALLERIES = {
   sundays: {
     eyebrow: "In ministry",
     title: "Worship and the Word",
-    intro: "Moments from our services and ministry gatherings.",
     items: [
       { src: "assets/img/photos/service-teaching.jpg", caption: "Pastor John Deus teaching during a service" },
       { src: "assets/img/photos/service-congregation.jpg", caption: "The congregation standing in praise" },
