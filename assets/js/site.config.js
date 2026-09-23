@@ -72,7 +72,7 @@ window.CHURCH = {
   /* Add  photo: "assets/img/photos/pastor-name.jpg"  to any leader to
      replace the placeholder illustration with a real portrait. */
   leaders: [
-    { name: "Pastor John Deus",
+    { name: "Pastor John & Lorna Deus",
       role: "Senior Pastor",
       photo: "assets/img/photos/pastor-and-wife.jpg",
       bio: "Shepherding Kericho Happy Church, and carrying the gospel through crusades and ministry visits across Africa, Europe, Asia and America." }
@@ -120,8 +120,8 @@ window.PHOTOS = {
   kids:          { src: "assets/img/photos/kids-ministry.jpg", alt: "Children at Sunday School - Happy Kids" },
   youth:         { src: "assets/img/photos/city-youth.jpg", alt: "The City Youth group together after a service" },
   outreach:      { src: "assets/img/photos/street-outreach.jpg", alt: "Church members out in the streets of Kericho - Kenya in the evening" },
-  worship:       { src: "assets/img/photos/congregation-standing.jpg", alt: "The congregation standing in worship" },
-  prayer:        { src: "assets/img/photos/prayer-2.jpg", alt: "A pastor laying hands on a member during prayer ministry" },
+  worship:       { src: "assets/img/photos/service-dancing.jpg", alt: "The worship team leading praise" },
+  prayer:        { src: "assets/img/photos/service-prayer.jpg", alt: "A moment of prayer during the service" },
   missions:      { src: "assets/img/photos/ministry-partners.jpg", alt: "Meeting ministry partners abroad" },
 
   /* --- Sermons -------------------------------------------- */
@@ -144,6 +144,25 @@ window.PHOTOS = {
    Videos open in the lightbox and only download when clicked.
    ============================================================= */
 window.GALLERIES = {
+
+  /* Homepage — a highlight reel from our own services */
+  sundays: {
+    eyebrow: "Our church life",
+    title: "Sundays at Kericho Happy Church",
+    intro: "Worship, the Word and a family that gathers week by week.",
+    items: [
+      { src: "assets/img/photos/service-teaching.jpg", caption: "Pastor John Deus teaching during a service" },
+      { src: "assets/img/photos/service-congregation.jpg", caption: "The congregation standing in praise" },
+      { src: "assets/img/photos/service-dancing.jpg", caption: "The worship team in praise" },
+      { src: "assets/img/photos/service-choir.jpg", caption: "Ministering with the worship team behind" },
+      { src: "assets/img/photos/service-hand-raised.jpg", caption: "Hand raised in worship with the choir" },
+      { src: "assets/img/photos/service-worship.jpg", caption: "Leading worship in Kiswahili" },
+      { src: "assets/img/photos/service-scripture.jpg", caption: "Preaching from the Scriptures" },
+      { src: "assets/img/photos/service-prayer.jpg", caption: "A moment of prayer" },
+      { src: "assets/img/photos/service-smiling.jpg", caption: "Preaching to the congregation" },
+      { src: "assets/img/photos/service-preaching-tent.jpg", caption: "Preaching under the tent" }
+    ]
+  },
 
   /* Homepage — the church's ministry outside Kenya */
   abroad: {
